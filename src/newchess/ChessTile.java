@@ -63,9 +63,9 @@ public class ChessTile {
     Function:
         Set a piece without changing the icon to test for mate 
     */
-    public void testSetPiece(ChessPiece p) {
+    /*public void testSetPiece(ChessPiece p) {
         piece = p;
-    }
+    }*/
     private final Color BACKGROUND_COLOR;
     private final JButton button = new JButton();
     private final Position position;

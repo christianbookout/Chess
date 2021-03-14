@@ -5,8 +5,8 @@
  */
 package newchess;
 
+import static newchess.ChessMove.*;
 import static newchess.Position.positionsEqual;
-import newchess.SpecialMove.ChessMove;
 
 /**
  *
@@ -67,10 +67,9 @@ import newchess.SpecialMove.ChessMove;
         - newPos representing the end position
         - currPos representing the starting position
     Outputs:
-        - True if you can move 
-        - False if you cannot
+        ChessMove showing special move, normal move, or none. 
     */
-    public abstract boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove);
+    public abstract ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos);
     
     /*
     Function:
@@ -83,7 +82,7 @@ import newchess.SpecialMove.ChessMove;
         - True if you can attack 
         - False if you cannot
     */
-    public abstract boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove);
+    //public abstract boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove);
     
 }
 
@@ -100,7 +99,7 @@ class Pawn extends ChessPiece {
     }
     
     @Override 
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) { 
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) { 
         
         int verticalChange = Math.abs(newPos.y - currPos.y);
         int horizontalChange = newPos.x - currPos.x;
@@ -124,15 +123,15 @@ class Pawn extends ChessPiece {
                 //System.out.println("Setting turn number to " + pawnDoubleJumpTurnNumber);
             //}
             if (newPos.y == 0) {
-                specialMove.setMove(ChessMove.PROMOTION);
+                return PROMOTION;
             }
-            return true;
+            return NORMAL;
         } else {
-            return false;
+            return NONE;
         }
     }
     
-    @Override
+    /*@Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         
         int horizontalChange = Math.abs(newPos.x - currPos.x);
@@ -162,7 +161,7 @@ class Pawn extends ChessPiece {
         }
         
         return false;
-    }
+    }*/
 }
 class Rook extends ChessPiece{
     public Rook() {
@@ -170,19 +169,19 @@ class Rook extends ChessPiece{
     }
     public boolean hasMoved = false;
     @Override
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) {
         
         //boolean isBlank = chessBoard[newPos.y][newPos.x].getPiece() instanceof blank;
         
         //You're correctly moving 
-        if (movingCorrect(currPos, newPos)) {
-            return searchForPiece(chessBoard, newPos, currPos, currPos);
+        if (movingCorrect(currPos, newPos) && searchForPiece(chessBoard, newPos, currPos, currPos)) {
+            return NORMAL;
         } 
         //You're moving incorrectly
-        return false;
+        return NONE;
     }
     
-    @Override
+    /*@Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         
         //boolean isAlly = chessBoard[newPos.y][newPos.x].getPiece().isAlly();
@@ -194,7 +193,7 @@ class Rook extends ChessPiece{
         } 
         //You are moving incorrectly 
         else return false;
-    }
+    }*/
     //Determines whether or not the movement is proper for a rook
     private boolean movingCorrect(Position currPos, Position newPos) {
         return (currPos.x == newPos.x && !(newPos.y == currPos.y)) || (currPos.y == newPos.y && !(newPos.x == currPos.x));
@@ -259,16 +258,18 @@ class Knight extends ChessPiece{
         super.setName("Knight");
     }
     @Override
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) {
         int horizontalChange = Math.abs(newPos.x - currPos.x);
         int verticalChange = (Math.abs(newPos.y - currPos.y));
         //Is the piece you're trying to move to blank? 
         boolean isBlank = chessBoard[newPos.y][newPos.x].getPiece() instanceof Blank;
         
-        return isBlank && movingCorrect(verticalChange, horizontalChange);
+        if (isBlank && movingCorrect(verticalChange, horizontalChange)) {
+            return NORMAL;
+        } else return NONE; 
     }
 
-    @Override
+/*    @Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         //If you try to click on your current location, return false
         if (newPos.x == currPos.x && newPos.y == currPos.y) {
@@ -282,7 +283,7 @@ class Knight extends ChessPiece{
         
         //:-) 
         return  notAlly && movingCorrect(verticalChange, horizontalChange);
-    }
+    }*/
     private boolean movingCorrect(int verticalChange, int horizontalChange) {
         return (verticalChange == 2 && horizontalChange == 1) || (verticalChange == 1 && horizontalChange == 2);
     }
@@ -294,16 +295,16 @@ class Bishop extends ChessPiece{
     }
     
     @Override
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) {
         int horizontalChange = Math.abs(newPos.x - currPos.x);
         int verticalChange = Math.abs(newPos.y - currPos.y);
         
-        if (horizontalChange == verticalChange) {
-            return searchForPiece(chessBoard, newPos, currPos, currPos);
+        if (horizontalChange == verticalChange && searchForPiece(chessBoard, newPos, currPos, currPos)) {
+            return NORMAL;
         }
-        return false;
+        else return NONE;
     }
-    @Override
+/*    @Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         int horizontalChange = Math.abs(newPos.x - currPos.x);
         int verticalChange = Math.abs(newPos.y - currPos.y);
@@ -312,7 +313,7 @@ class Bishop extends ChessPiece{
             return searchForPiece(chessBoard, newPos, currPos, currPos);
         }
         return false;
-    } 
+    } */
     
     private boolean searchForPiece(ChessTile[][] chessBoard, Position newPos, Position sp, Position originalPos) {
         ChessPiece search = chessBoard[sp.y][sp.x].getPiece();
@@ -368,16 +369,17 @@ class Queen extends ChessPiece{
         super.setName("Queen");
     }
     @Override
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) {
         int horizontalChange = Math.abs(newPos.x - currPos.x);
         int verticalChange = Math.abs(newPos.y - currPos.y);
         if (chessBoard[newPos.y][newPos.x].getPiece() instanceof Blank 
                 && (horizontalChange == verticalChange 
                 || ((currPos.x == newPos.x && !(newPos.y == currPos.y)) 
-                || (currPos.y == newPos.y && !(newPos.x == currPos.x))))) {
-            return searchForPiece(chessBoard, newPos, currPos, currPos);
+                || (currPos.y == newPos.y && !(newPos.x == currPos.x))))
+                && searchForPiece(chessBoard, newPos, currPos, currPos)) {
+            return NORMAL;
         } 
-        return false;
+        else return NONE;
     }
     private boolean searchForPiece(ChessTile[][] chessBoard, Position newPos, Position sp, Position originalPos) {
         int horizontalChange = newPos.x - sp.x;
@@ -439,7 +441,7 @@ class Queen extends ChessPiece{
             return searchForPiece(chessBoard, newPos, searchPos, originalPos);
         }
     }
-    @Override
+/*    @Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         int horizontalChange = Math.abs(newPos.x - currPos.x);
         int verticalChange = Math.abs(newPos.y - currPos.y);
@@ -451,7 +453,7 @@ class Queen extends ChessPiece{
             return searchForPiece(chessBoard, newPos, currPos, currPos);
         } 
         return false;
-    }
+    */
 }
 
 class King extends ChessPiece{
@@ -460,7 +462,7 @@ class King extends ChessPiece{
     }
     public boolean hasMoved = false;
     @Override
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) {
         
         int verticalChange = Math.abs(newPos.y - currPos.y);
         int horizontalChange = Math.abs(newPos.x - currPos.x);
@@ -468,16 +470,15 @@ class King extends ChessPiece{
         
         if (rook.isAlly() && rook instanceof Rook &&  ((Rook)rook).hasMoved == false && this.hasMoved == false) {
             //TODO only allow if the castle doesn't put the king in check and the king already isn't in check
-            specialMove.setMove(ChessMove.CASTLE);
-            return true; 
+            return CASTLE;
         }
         else if (chessBoard[newPos.y][newPos.x].getPiece() instanceof Blank && (verticalChange + horizontalChange == 1 || (verticalChange == 1 && horizontalChange == 1))) {
-            return true; 
+            return NORMAL;
         }
-        else return false;
+        else return NONE;
     }
 
-    @Override
+/*    @Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         
         int verticalChange = Math.abs(newPos.y - currPos.y);
@@ -487,5 +488,5 @@ class King extends ChessPiece{
             return true; 
         }
         else return false;
-    }
+    }*/
 }

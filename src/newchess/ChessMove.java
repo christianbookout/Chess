@@ -5,18 +5,16 @@
  */
 package newchess;
 
-/**
- *
- * @author chris
- */
-public class SpecialMove {
-    private ChessMove thisMove;
-    public static enum ChessMove{
+
+public enum ChessMove{
         NONE,
         CASTLE,
         PROMOTION,
         EN_PASSANT;
     }
+/*public class SpecialMove {
+    private ChessMove thisMove;
+    
     public SpecialMove(ChessMove move) {
         thisMove = move;
     }
@@ -26,4 +24,4 @@ public class SpecialMove {
     public ChessMove getMove() {
         return thisMove;
     }
-}
+}*/

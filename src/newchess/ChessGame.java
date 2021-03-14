@@ -12,7 +12,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import static newchess.ChessBoardWindow.CHESSBOARD_HEIGHT;
 import static newchess.ChessBoardWindow.CHESSBOARD_WIDTH;
-import newchess.SpecialMove.ChessMove;
+import static newchess.ChessMove.*;
 
 /**
  *
@@ -55,8 +55,8 @@ public class ChessGame {
         //Piece just clicked (not selected piece necessarily)
         ChessPiece piece = tileClicked.getPiece();
         
-        SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
-        specialMove.setMove(ChessMove.NONE);
+        //SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
+        //specialMove.setMove(ChessMove.NONE);
         
         //If it isn't your turn to move then you can't do anything.
         if (!alliedTurn) {
@@ -80,12 +80,11 @@ public class ChessGame {
         }
         //If you could possibly castle (because you selected a king and clicked on a rook) 
         else if (selectedTile.getPiece() instanceof King && tileClicked.getPiece() instanceof Rook && tileClicked.getPiece().isAlly()) {
-            if (selectedTile.getPiece().moveHere(CHESS_TILES, tileClicked.getPosition(), selectedTile.getPosition(), specialMove)) {
-                if (specialMove.getMove() == ChessMove.CASTLE) {
-                    castle(selectedTile, tileClicked);
-                    sendMove(selectedTile, tileClicked.getPosition(), specialMove);
-                    return;
-                }
+            if (selectedTile.getPiece().moveHere(CHESS_TILES, tileClicked.getPosition(), selectedTile.getPosition()) == CASTLE) {
+                castle(selectedTile, tileClicked);
+                sendMove(selectedTile, tileClicked.getPosition(), ChessMove.CASTLE);
+                return;
+                
             }
         }
         //If you click on an allied piece and already have a selected piece then select that allied piece you just clicked
@@ -98,12 +97,11 @@ public class ChessGame {
         else if (tileClicked.getButton() == selectedTile.getButton() && !(selectedTile.getPiece() instanceof Blank)) {
             return;
         } 
-        //All of the return situations passed, so that means you can theoretically attack or move. 
+        //All of the return situations passed, so that means you can theoretically attack or move (at least by each piece's standard). 
         else {
             selectedTile.unhighlight();
-            
-            if (selectedTile.getPiece().moveHere(CHESS_TILES, tileClicked.getPosition(), selectedTile.getPosition(), specialMove)
-                    || selectedTile.getPiece().attackHere(CHESS_TILES, tileClicked.getPosition(), selectedTile.getPosition(), specialMove)) 
+            ChessMove move = selectedTile.getPiece().moveHere(CHESS_TILES, tileClicked.getPosition(), selectedTile.getPosition());
+            if (move != NONE) 
             {
                 //If the piece can't move bc it would put the king in check then "deselect" the piece and return :-) 
                 if (!canMove(selectedTile)) {
@@ -111,8 +109,8 @@ public class ChessGame {
                     return;
                 }
                 
-                System.out.println("Moving " + selectedTile.getPiece().getName() + " to " + tileClicked.getPosition().x + ", " + tileClicked.getPosition().y + " with special move " + specialMove.getMove().toString());
-                switch (specialMove.getMove()) {
+                System.out.println("Moving " + selectedTile.getPiece().getName() + " to " + tileClicked.getPosition().x + ", " + tileClicked.getPosition().y + " with move " + move.toString());
+                switch (move) {
                     case NONE:
                         movePiece(selectedTile, tileClicked.getPosition());
                         break;
@@ -127,7 +125,7 @@ public class ChessGame {
                         enPassant(selectedTile, tileClicked.getPosition());
                         break;
                 }
-                sendMove(selectedTile, tileClicked.getPosition(), specialMove);
+                sendMove(selectedTile, tileClicked.getPosition(), move);
                 //TODO set hasmoved to true for necessary pieces
                 //TODO check for stalemate 
 
@@ -301,12 +299,12 @@ public class ChessGame {
         - toPosition:
         - -specialMove:
     */
-    private static void sendMove(ChessTile tile, Position toPosition, SpecialMove specialMove) {
+    private static void sendMove(ChessTile tile, Position toPosition, ChessMove moveType) {
         String move;
         move = tile.getPosition().x + "," + tile.getPosition().y + "," + toPosition.x + "," + toPosition.y;
         
-        if (specialMove.getMove() != ChessMove.NONE) {
-            switch (specialMove.getMove()) {
+        if (moveType != NONE) {
+            switch (moveType) {
                 case EN_PASSANT: 
                     move = move.concat(",p");
                     break;
@@ -326,6 +324,7 @@ public class ChessGame {
         
         //+2 or -2 
         int kingMove = 0;
+        
         //-3, -2, 2, 3
         int rookMove = 0;
         int xDistance = Math.abs(king.getPosition().x - rook.getPosition().x);
@@ -423,7 +422,7 @@ public class ChessGame {
         ArrayList<ChessTile> piecesAttackingKing = new ArrayList<>();
         for (ChessTile[] ct: CHESS_TILES) {
             for (ChessTile t : ct) {
-                SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
+                //SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
                 //Ignore blank pieces and your allied pieces
                 if (t.getPiece() instanceof Blank || t.getPiece().isAlly()) {
                     continue;
@@ -431,22 +430,23 @@ public class ChessGame {
                 try {
                 System.out.println("Testing to see if " + t.getPiece().getName() + " at " + t.getPosition().x + " " + t.getPosition().y + " can attack " + tile.getPiece().getName());
                 //If the piece on the board can attack the specified piece by moving there or attacking it
-                if (t.getPiece().moveHere(CHESS_TILES, t.getPosition(), tile.getPosition(), specialMove) || 
-                         t.getPiece().attackHere(CHESS_TILES, t.getPosition(), tile.getPosition(), specialMove)) 
+                ChessMove move = t.getPiece().moveHere(CHESS_TILES, t.getPosition(), tile.getPosition());
+                if (move != NONE) 
                 {
-                    if (specialMove.getMove() == ChessMove.NONE) {
+                    //if (specialMove.getMove() == ChessMove.NONE) {
                         piecesAttackingKing.add(t);
                         System.out.println(t.getPiece().getName() + " can attack the king");
-                    }
+                    //}
                     //add to list and continue searching if i end up doing TODO 
                     //TODO make sure that you can en passant to block king in check 
                     // ^^ actually i dont know if this is possible lol 
                 } 
                 } catch (Exception e){
-                    System.err.println("Exception: " + e.getMessage());
+                    System.err.println(e.getMessage());
                 }
             }
         }
+        //Return the pieces attacking king as an array of type ChessTile (this is how java does it, kinda wild) 
         return piecesAttackingKing.toArray(new ChessTile[0]);
     }
     
@@ -500,7 +500,7 @@ public class ChessGame {
                 
                 //If there is one piece attacking the king and this piece can kill that piece, then it is possible to save the king. 
                 if (piecesAttackingKing.length == 1 && 
-                        t.getPiece().attackHere(CHESS_TILES, piecesAttackingKing[0].getPosition(), t.getPosition(), new SpecialMove(ChessMove.NONE))) {
+                        t.getPiece().moveHere(CHESS_TILES, piecesAttackingKing[0].getPosition(), t.getPosition()) != NONE) {
                     return testMove(t, piecesAttackingKing[0]);
                 } 
                 //The only way to save the king from a pawn or a knight is by killing it. If the piece attacking the king is a pawn or knight, then you can't save the king. 
@@ -516,8 +516,8 @@ public class ChessGame {
                             //If the piece attacking the king and your selected tile "t" can move to the same position for each of the pieces attacking the king, 
                             //then you can save the king from checkmate by moving to that position.
                             int counter = 0;
-                            if (t.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition(), new SpecialMove(ChessMove.NONE))
-                                && help.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition(), new SpecialMove(ChessMove.NONE))) {
+                            if (t.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition()) != NONE
+                                && help.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition()) != NONE) {
                                 counter++;
                             }
                             //If your move intercepts each of the pieces attacking the king's views, then it can save the king. 
@@ -548,17 +548,16 @@ public class ChessGame {
                 //You can't move more than 2 spaces away from your king, so no need to even check. 
                 if (Math.abs(t.getPosition().x - kingTile.getPosition().x) > 1 || Math.abs(t.getPosition().y - kingTile.getPosition().y) > 1 ) continue;
                 
-                SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
-                if (kingTile.getPiece().moveHere(CHESS_TILES, t.getPosition(), kingTile.getPosition(), specialMove)) {
-                    //If you aren't trying to castle (because you cant castle in check) then you can save yourself
-                    if (specialMove.getMove() == ChessMove.NONE) {
-                        return true;
-                    }
+                //SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
+                ChessMove move = kingTile.getPiece().moveHere(CHESS_TILES, t.getPosition(), kingTile.getPosition()
+                if (move == NORMAL && isUnderAttack(t).length == 0) {
+                    //If you can move to a piece that isn't under attack then the king can save itself
+                    return true;
                 }
-                //If the king can attack a tile and there are no pieces defending that tile then you can attack there to save yourself.
-                else if (kingTile.getPiece().attackHere(CHESS_TILES, t.getPosition(), kingTile.getPosition(), specialMove) && isUnderAttack(t).length == 0) {
+                /*//If the king can attack a tile and there are no pieces defending that tile then you can attack there to save yourself.
+                else if (kingTile.getPiece().attackHere(CHESS_TILES, t.getPosition(), kingTile.getPosition()) && isUnderAttack(t).length == 0) {
                     return true; 
-                }
+                }*/
             }
         }
         return false;
