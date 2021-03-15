@@ -16,14 +16,14 @@ public class Blank extends ChessPiece {
     }
 
     @Override
-    public boolean moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
+    public ChessMove moveHere(ChessTile[][] chessBoard, Position newPos, Position currPos) {
         System.err.println("Trying to move as a blank piece");
-        return false;
+        return ChessMove.NONE;
     }
 
-    @Override
+    /*@Override
     public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
         System.err.println("Trying to attack as a blank piece");
         return false;
-    }
+    }*/
 }

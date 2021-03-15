@@ -1,0 +1,8 @@
+
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}hi welcome to chess
+<#if licenseLast??>
+${licenseLast}
+</#if>

@@ -19,4 +19,7 @@ public class Position {
     public static boolean positionsEqual(Position pos1, Position pos2) {
         return pos1.x == pos2.x && pos1.y == pos2.y;
     }
+    public boolean equals(Position pos) {
+        return x == pos.x && y == pos.y;
+    }
 }

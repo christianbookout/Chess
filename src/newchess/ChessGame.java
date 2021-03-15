@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package newchess;
 
 import java.io.IOException;
@@ -14,10 +10,6 @@ import static newchess.ChessBoardWindow.CHESSBOARD_HEIGHT;
 import static newchess.ChessBoardWindow.CHESSBOARD_WIDTH;
 import static newchess.ChessMove.*;
 
-/**
- *
- * @author chris
- */
 public class ChessGame {
     
     //A 2D array of each individual chess tile. Height x Width. 0,0 represents the top-left and 7,7 represents the bottom-right.
@@ -97,14 +89,15 @@ public class ChessGame {
         else if (tileClicked.getButton() == selectedTile.getButton() && !(selectedTile.getPiece() instanceof Blank)) {
             return;
         } 
-        //All of the return situations passed, so that means you can theoretically attack or move (at least by each piece's standard). 
+        //All of the return situations passed, so that means you can theoretically attack or move. 
         else {
             selectedTile.unhighlight();
             ChessMove move = selectedTile.getPiece().moveHere(CHESS_TILES, tileClicked.getPosition(), selectedTile.getPosition());
+            //Make sure you aren't clicking somewhere you can't actually move
             if (move != NONE) 
             {
                 //If the piece can't move bc it would put the king in check then "deselect" the piece and return :-) 
-                if (!canMove(selectedTile)) {
+                if (!canLegallyMove(selectedTile)) {
                     selectedTile = null;
                     return;
                 }
@@ -145,19 +138,18 @@ public class ChessGame {
     }
     /*
     Function:
-        Tests to see if a chess tile can move w/o putting the king in danger. 
+        Tests to see if a chess tile can move w/o putting the king in danger.
             -If a tile is not under attack, then it can move safely. 
             -If a tile is only under attack by a knight, pawn, or king (either assumed to not already have the king in check) 
             -If a tile is under attack by a bishop, queen, or rook and the path from the bishop, queen, or king that leads to the current piece 
     */
-    private static boolean canMove(ChessTile tile) { 
+    private static boolean canLegallyMove(ChessTile tile) { 
+        
         //Take the position of the attacking piece and the current piece (for example 0,0 and 3,3) and take the separation between the two (-3, -3) and divide by the absolute value (-1, -1) 
         //and then check if the king's position is some multiple of that and if it is then check each piece from the piece being attacked to the king and see if there are any pieces blocking 
         //that distance and if there are then the piece can move and if there aren't then the piece cannot move
         ChessTile kingTile = findKingTile(tile.getPiece().isAlly());
         
-        //Checking king in check
-        //if (piecesAttackingKing.length == 0) return true;
         
         ChessTile[] piecesAttackingTile = isUnderAttack(tile);
         
@@ -165,21 +157,29 @@ public class ChessGame {
         if (piecesAttackingTile.length == 0)  return true;
         
         //Checking to see if the pieces attacking the king are only pawns, rooks, and/or a king.
-        int counter = 0;
-        ChessPiece p;
+        /*int counter = 0;
         for (ChessTile t : piecesAttackingTile) {
             p = t.getPiece();
             if (p instanceof Pawn || p instanceof Rook || p instanceof King) {
                 counter++; 
             }
         }
-        if (counter == piecesAttackingTile.length) return true;
+        if (counter == piecesAttackingTile.length) return true;*/
         
         //Checking to see if the move would put the king in check (bc the piece is defending the king)
-        counter = 0;
+        
+        //Counter counts to see if each piece attacking the tile is pinning the current tile to the king for each piece attacking the tile 
+        int counter = 0;
+        ChessPiece p;
+        
+        //t is an enemy piece (pawn, knight, bishop, rook, or queen) 
         for (ChessTile t : piecesAttackingTile) {
             p = t.getPiece();
+            
+            //The vector from the piece attacking the king to the tile
             Position posChange = new Position(t.getPosition().x - tile.getPosition().x, t.getPosition().y - tile.getPosition().y);
+            
+            //The vector from the piece attacking the king to the king
             Position posToKingChange = new Position(t.getPosition().x - kingTile.getPosition().x, t.getPosition().y - kingTile.getPosition().y);
             
             Position posSign = new Position(0, 0);
@@ -198,38 +198,38 @@ public class ChessGame {
                 kingPosSign.y = posToKingChange.y / Math.abs(posToKingChange.y);
             }
             
-            if (p instanceof Pawn || p instanceof Rook || p instanceof King) {
+            
+            //Pawns and knights can't pin a piece to the king
+            if (p instanceof Pawn || p instanceof Knight || p instanceof King) {
                 counter++; 
+                continue;
             } 
             //The king isn't in the line of sight of the other piece.
             else if (!Position.positionsEqual(kingPosSign, posSign)) {
                 counter++;
+                continue;
             }
-            
-            //else if (p instanceof Rook) {
-            
-            //The last check: to see if there are any pieces in the way.
-                ChessTile currTile = CHESS_TILES[tile.getPosition().x + posSign.x][tile.getPosition().y + posSign.y];
-                while (true) {
-                    //if (currTile has reached destination) {
-                    
-                    //}
-                    /*else */if (!(currTile.getPiece() instanceof Blank)) {
-                        counter++;
-                        break;
-                    }
-                    currTile = CHESS_TILES[tile.getPosition().x + posSign.x][tile.getPosition().y + posSign.y];
+
+            //The last check: to see if there are any pieces in the way (b/c a rook can't be pinned to a pawn if the pawn is in the way of the king).
+            ChessTile currTile = CHESS_TILES[tile.getPosition().x + posSign.x][tile.getPosition().y + posSign.y];
+            while (true) {
+                //Reached the destination; therefore, you can't move b/c you're pinned. 
+                if (currTile.getPosition().equals(t.getPosition())) {
+                    return false;
                 }
-            //} 
-            /*else if (p instanceof Bishop) {
-                
-            } 
-            else if (p instanceof Queen) {
-                
-            } */
+                //Reached a piece; therefore, you aren't pinned. 
+                if (!(currTile.getPiece() instanceof Blank)) {
+                    counter++;
+                    break;
+                }
+                currTile = CHESS_TILES[tile.getPosition().x + posSign.x][tile.getPosition().y + posSign.y];
+            }
         }
-        if (counter == piecesAttackingTile.length) return true;
-        
+        //There are no pieces pinning the tile to the king. 
+        if (counter == piecesAttackingTile.length) {
+            return true;
+        }
+
         return false;
     }
     private static void movePiece(ChessTile tile, Position toPosition) {
@@ -256,7 +256,7 @@ public class ChessGame {
         endTurn();
     }
     
-    //in movepiece make sure to set hasMoved to true for kings, rooks, and pawns 
+    //TODO: in movepiece make sure to set hasMoved to true for kings, rooks, and pawns 
     public static void receiveMove(String[] decode) {
         
         Position fromPos = new Position(7 - Integer.parseInt(decode[0]), 7 - Integer.parseInt(decode[1]));
@@ -285,9 +285,8 @@ public class ChessGame {
             }
 
         }
-
+        
         if (isKingInCheckmate(true)) {
-            System.out.println("I'm in checkmate D: ");
             endGame(false, "test");
         }
     }
@@ -366,29 +365,15 @@ public class ChessGame {
         
         fromTile.setPiece(new Blank());
         endTurn();
-        
-        /*switch (decode[5]) {
-                        case "p": //pawn promotion
-                            break;
-                        case "r": //rook promotion
-                            break;
-                        case "q": //queen promotion (only one in use for now)
-                            
-                            
-                            break;
-                        case "b": //bishop promotion 
-                            break;
-                        case "n": //knight promotion
-                            break;
-                    }
-                    break;*/
     }
+    //Move the pawn toPosition (completes an en passant) 
     public static void enPassant(ChessTile pawn, Position toPosition) {
         CHESS_TILES[toPosition.y][toPosition.x].setPiece(pawn.getPiece());
         CHESS_TILES[pawn.getPosition().y][toPosition.x].setPiece(new Blank());
         pawn.setPiece(new Blank());
         endTurn();
     }
+    //Ends turn, increments turn number, and sets to opponent's turn 
     private static void endTurn() {
         alliedTurn = !alliedTurn;
         turnNumber++;
@@ -415,7 +400,7 @@ public class ChessGame {
     
     /*
     Function:
-        Finds all of the pieces attacking "tile". 
+        Finds all of the pieces attacking "tile". returns an array of said pieces. 
     */
     private static ChessTile[] isUnderAttack(ChessTile tile) { 
         //Check every piece on the board to see if it can attack the specified piece 
@@ -435,9 +420,7 @@ public class ChessGame {
                 {
                     //if (specialMove.getMove() == ChessMove.NONE) {
                         piecesAttackingKing.add(t);
-                        System.out.println(t.getPiece().getName() + " can attack the king");
                     //}
-                    //add to list and continue searching if i end up doing TODO 
                     //TODO make sure that you can en passant to block king in check 
                     // ^^ actually i dont know if this is possible lol 
                 } 
@@ -450,20 +433,8 @@ public class ChessGame {
         return piecesAttackingKing.toArray(new ChessTile[0]);
     }
     
-    /*
-    Function:
-        Makes sure you can move a piece without putting the king in check, or without saving the king from check. 
-    */
-    //private static boolean canMovePiece(ChessTile fromTile, ChessTile toTile) {
-    //    return false;
-    //}
-    /*
-    Function:
-        Tests a move to see if it can save the king. Returns true if it can.
-    */
-    
     //TODO don't use this :)
-    private static boolean testMove(ChessTile fromTile, ChessTile toTile) { //TODO: make sure this works (bc pointers are fucked) 
+    /*private static boolean testMove(ChessTile fromTile, ChessTile toTile) { 
         
         //TODO make sure the chesspiece variables arent changing and breaking stuff
         ChessPiece toTilePiece = toTile.getPiece();
@@ -480,7 +451,7 @@ public class ChessGame {
         fromTile.setPiece(fromTilePiece);
         
         return returnValue;
-    }
+    }*/
     /*
     Function:
         Assuming the king is in check, finds any piece that can move to save the king from mate
@@ -499,11 +470,13 @@ public class ChessGame {
                 if (t.getPiece() instanceof Blank || !t.getPiece().isAlly()) continue;
                 
                 //If there is one piece attacking the king and this piece can kill that piece, then it is possible to save the king. 
-                if (piecesAttackingKing.length == 1 && 
-                        t.getPiece().moveHere(CHESS_TILES, piecesAttackingKing[0].getPosition(), t.getPosition()) != NONE) {
-                    return testMove(t, piecesAttackingKing[0]);
+                if (piecesAttackingKing.length == 1
+                        && t.getPiece().moveHere(CHESS_TILES, piecesAttackingKing[0].getPosition(), t.getPosition()) != NONE
+                        && canLegallyMove(t)) {
+                    return true; //TODO dunno if enough conditions are checked
                 } 
-                //The only way to save the king from a pawn or a knight is by killing it. If the piece attacking the king is a pawn or knight, then you can't save the king. 
+                //The only way to save the king from a pawn or a knight is by killing it. If the piece attacking the king is a pawn or knight, then you can't save the king 
+                //(already checked if we can kill it). 
                 for (ChessTile i : piecesAttackingKing) {
                     if (i.getPiece() instanceof Pawn || i.getPiece() instanceof Knight) {
                         return false;
@@ -521,8 +494,9 @@ public class ChessGame {
                                 counter++;
                             }
                             //If your move intercepts each of the pieces attacking the king's views, then it can save the king. 
-                            if (counter == piecesAttackingKing.length) {
-                                return testMove(t, piecesAttackingKing[0]);
+                            if (counter == piecesAttackingKing.length && canLegallyMove(t)) {
+                                //return testMove(t, piecesAttackingKing[0]);
+                                return true;
                             }
                         }
                         
@@ -549,7 +523,7 @@ public class ChessGame {
                 if (Math.abs(t.getPosition().x - kingTile.getPosition().x) > 1 || Math.abs(t.getPosition().y - kingTile.getPosition().y) > 1 ) continue;
                 
                 //SpecialMove specialMove = new SpecialMove(ChessMove.NONE);
-                ChessMove move = kingTile.getPiece().moveHere(CHESS_TILES, t.getPosition(), kingTile.getPosition()
+                ChessMove move = kingTile.getPiece().moveHere(CHESS_TILES, t.getPosition(), kingTile.getPosition());
                 if (move == NORMAL && isUnderAttack(t).length == 0) {
                     //If you can move to a piece that isn't under attack then the king can save itself
                     return true;
@@ -563,6 +537,7 @@ public class ChessGame {
         return false;
     }
     
+    //Check if the king's in checkmate (at the beginning of the round) 
     private static boolean isKingInCheckmate(boolean isKingAlly) {
         ChessTile kingTile = findKingTile(isKingAlly);
         ChessTile[] piecesAttackingKing = isUnderAttack(kingTile);
@@ -574,8 +549,10 @@ public class ChessGame {
         else if (canSaveKing(isKingAlly) || canKingSaveItself(isKingAlly)) return false;
         
         //King must be in checkmate if the other conditions didn't pass. 
-        return true;
+        else return true;
     }
+    
+    //Ends the game by disabling each button and printing endText 
     public static void endGame(boolean allyWon, String endText){
         if (CHESS_TILES[0][0].getButton().isEnabled()) {
             CHESS_WINDOW.CHAT_BOX.append("\n" + endText + "\n");
