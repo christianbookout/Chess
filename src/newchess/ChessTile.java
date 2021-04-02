@@ -89,6 +89,9 @@ public class ChessTile {
         });
     }
     
+    public String toString() {
+        return piece + " at " + position;
+    }
     
     public JButton getButton(){
         return button;

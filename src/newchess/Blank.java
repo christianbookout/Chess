@@ -13,6 +13,7 @@ public class Blank extends ChessPiece {
     
     public Blank() {
         super.setName("Blank");
+        super.isAlly(false);
     }
 
     @Override
