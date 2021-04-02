@@ -315,18 +315,17 @@ class Bishop extends ChessPiece{
         
         int horizontalChange = newPos.x - originalPos.x;
         int verticalChange = newPos.y - originalPos.y;
-        
         //boolean isBlank = search instanceof Blank;
         
         //Otherwise it would directly change the original search position which was causing bugs
         Position searchPos = new Position(sp.x, sp.y);
         
         //If the piece that the search function is currently selecting is not a blank piece then return false, as something is blocking the bishop's way
-        if (((search.isAlly() || search instanceof Blank) && !(searchPos.equals(newPos))) && !(searchPos.equals(originalPos))) {
+        if ((!(search instanceof Blank) && !(searchPos.equals(newPos))) && !(searchPos.equals(originalPos))) {
             return false;
         } 
         //If the tile has been reached, and the bishop can move there
-        else if (!search.isAlly() && (searchPos.equals(originalPos))) {
+        else if (!search.isAlly() && (searchPos.equals(newPos))) {
             return true;
         } 
         //If the tile has been reached, and the bishop can't move there

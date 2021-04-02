@@ -100,7 +100,7 @@ public class ChessGame {
                 }
                 //Check to see if the king's in check. If it is, make sure your move would save it from checkmate. 
                 if (isUnderAttack(findKingTile(selectedTile.getPiece().isAlly())).length > 0) {
-                    
+                    //if ()
                 }
                 //System.out.println("Moving " + selectedTile.getPiece().getName() + " to " + tileClicked.getPosition().x + ", " + tileClicked.getPosition().y + " with move " + move.toString());
                 switch (move) {
@@ -142,6 +142,7 @@ public class ChessGame {
         //that distance and if there are then the piece can move and if there aren't then the piece cannot move
         ChessTile kingTile = findKingTile(tile.getPiece().isAlly());
         
+        if (tile.getPiece() instanceof King) return true; //TODO make sure this is fine 
         
         ChessTile[] piecesAttackingTile = isUnderAttack(tile);
         
@@ -198,9 +199,9 @@ public class ChessGame {
             //Otherwise will result in infinite loop
             if (posSign.equals(new Position(0, 0))) continue;
             
-            while (true) {
+            while (true) { //TODO fix this infinite loop when you're pinned
                 //Reached the destination; therefore, you can't move b/c you're pinned. 
-                System.out.println("Here");
+                System.out.println("Checking " + currTile);
                 if (currTile.getPosition().equals(t.getPosition())) {
                     return false;
                 }
@@ -273,7 +274,7 @@ public class ChessGame {
     
     /*
     Function:
-        Assuming the king is in check, see if the
+        Assuming the king is in check, see if the piece can save the king 
     */
     /*
     Ways to save the king from mate: 
@@ -342,8 +343,8 @@ public class ChessGame {
                     posToKingSign.y = posToKingChange.y / Math.abs(posToKingChange.y);
                 }
 
-                //if y posToKingChange is negative and you're moving to a y-position greater than piece attacking king position then you can move
-                //if y posToKingChange is positive and you're moving to a y-position less than piece attacking king position then you can move
+                //if posToKingChange is negative and you're moving to a position greater than piece attacking king position then you can move
+                //if posToKingChange is positive and you're moving to a position less than piece attacking king position then you can move
                 boolean blockingVision = ((posToKingChange.y < 0 && j.getPosition().y > piecesAttackingKing[0].getPosition().y) || (posToKingChange.y > 0 && j.getPosition().y < piecesAttackingKing[0].getPosition().y) || posToKingChange.y == 0)
                         && ((posToKingChange.x < 0 && j.getPosition().x > piecesAttackingKing[0].getPosition().x) || (posToKingChange.x > 0 && j.getPosition().x < piecesAttackingKing[0].getPosition().x) || posToKingChange.x == 0);
 
