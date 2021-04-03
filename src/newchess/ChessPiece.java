@@ -385,16 +385,18 @@ class Queen extends ChessPiece{
         Position searchPos = new Position(sp.x, sp.y);
         
             
-        //If the piece that the search function is currently selecting is not a blank piece then return false, as something is blocking the queen's way
-        if (search.isAlly() && !searchPos.equals(newPos) && !searchPos.equals(originalPos)) {
-            return false;
-        }
+        
         //If the tile has been reached, and the queen can move there or attack then return true
-        else if (searchPos.equals(newPos) && (search instanceof Blank || !search.isAlly())) {
+        if (searchPos.equals(newPos) && !search.isAlly()) {
             return true;
         } 
+        //If the piece that the search function is currently selecting is not a blank piece then return false, as something is blocking the queen's way
+        else if (search.isAlly() && !searchPos.equals(newPos) && !searchPos.equals(originalPos)) {
+            return false;
+        }
         //The search function will recursively run until it reaches the specified position.
         else {
+            //this so bad but i'm too lazy to fix it (already made a better method) 
             //Setting search position one up-right
             if (-horizontalChange == verticalChange && verticalChange < 0) { 
                 searchPos.x++;

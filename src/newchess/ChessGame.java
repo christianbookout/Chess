@@ -94,7 +94,7 @@ public class ChessGame {
             if (move != NONE) 
             {
                 //If the piece can't move bc it would put the king in check then "deselect" the piece and return :-) 
-                if (!canLegallyMove(selectedTile)) {
+                if (!canLegallyMove(selectedTile, tileClicked)) {
                     selectedTile = null;
                     return;
                 }
@@ -135,11 +135,12 @@ public class ChessGame {
             -If a tile is only under attack by a knight, pawn, or king (either assumed to not already have the king in check) 
             -If a tile is under attack by a bishop, queen, or rook and the path from the bishop, queen, or king that leads to the current piece 
     */
-    private static boolean canLegallyMove(ChessTile tile) { 
+    private static boolean canLegallyMove(ChessTile tile, ChessTile toTile) { 
         
         //Take the position of the attacking piece and the current piece (for example 0,0 and 3,3) and take the separation between the two (-3, -3) and divide by the absolute value (-1, -1) 
         //and then check if the king's position is some multiple of that and if it is then check each piece from the piece being attacked to the king and see if there are any pieces blocking 
         //that distance and if there are then the piece can move and if there aren't then the piece cannot move
+        System.out.println("Checking if " + tile + " can legally move");
         ChessTile kingTile = findKingTile(tile.getPiece().isAlly());
         
         if (tile.getPiece() instanceof King) return true; //TODO make sure this is fine 
@@ -192,25 +193,36 @@ public class ChessGame {
                 counter++;
                 continue;
             }
-
+            System.out.println("posSign is " + posSign);
             //The last check: to see if there are any pieces in the way (b/c a rook can't be pinned to a pawn if the pawn is in the way of the king).
-            ChessTile currTile = CHESS_TILES[tile.getPosition().x + posSign.x][tile.getPosition().y + posSign.y];
+            ChessTile currTile = CHESS_TILES[tile.getPosition().y - posSign.y][tile.getPosition().x - posSign.x];
             
             //Otherwise will result in infinite loop
             if (posSign.equals(new Position(0, 0))) continue;
             
             while (true) { //TODO fix this infinite loop when you're pinned
                 //Reached the destination; therefore, you can't move b/c you're pinned. 
-                System.out.println("Checking " + currTile);
-                if (currTile.getPosition().equals(t.getPosition())) {
+                System.out.println("Checking " + currTile + " pos sign: " + posSign);
+                if (currTile.getPosition().equals(kingTile.getPosition())) {
+                    if (toTile.equals(t)) {
+                        counter++;
+                        break;
+                    }
                     return false;
                 }
                 //Reached a piece; therefore, you aren't pinned. 
                 if (!(currTile.getPiece() instanceof Blank)) {
+                    System.out.println("Reached a piece: " + currTile.getPiece() + " at " + currTile.getPosition());
+                    counter++;
+                    break; 
+                }
+                try {
+                    currTile = CHESS_TILES[currTile.getPosition().y - posSign.y][currTile.getPosition().x - posSign.x];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Piece isn't pinned");
                     counter++;
                     break;
                 }
-                currTile = CHESS_TILES[tile.getPosition().x + posSign.x][tile.getPosition().y + posSign.y];
             }
         }
         //There are no pieces pinning the tile to the king. 
@@ -300,7 +312,7 @@ public class ChessGame {
 
         //If there is one piece attacking the king and this piece can kill that piece, then it is possible to save the king. 
         if (t.getPiece().moveHere(CHESS_TILES, piecesAttackingKing[0].getPosition(), t.getPosition()) != NONE
-                && canLegallyMove(t)) {
+                && canLegallyMove(t, piecesAttackingKing[0])) {
             System.out.println(t.getPiece() + " at " + t.getPosition() + " can save king from " + piecesAttackingKing[0]);
             return true; //TODO dunno if enough conditions are checked
         }
@@ -350,11 +362,11 @@ public class ChessGame {
 
                 if (t.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition()) != NONE
                         && piecesAttackingKing[0].getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition()) != NONE
-                        && posToKingSign.equals(posSign) && canLegallyMove(t)
+                        && posToKingSign.equals(posSign) && canLegallyMove(t, j)
                         && blockingVision) { //TODO make sure they aren't just the same position but it is a position that is putting the king in check 
                     //done i think
 
-                    System.out.println(t.getPiece() + " at " + t.getPosition() + " can move to " + j.getPosition() + " to save the king " + " blocking vision: " + blockingVision + " kingPosSign check: " + posToKingSign.equals(posSign) + " can legally move the tile " + canLegallyMove(t) + " can move the piece " + t.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition()));
+                    System.out.println(t.getPiece() + " at " + t.getPosition() + " can move to " + j.getPosition() + " to save the king " + " blocking vision: " + blockingVision + " kingPosSign check: " + posToKingSign.equals(posSign) + " can legally move the tile " + canLegallyMove(t, j) + " can move the piece " + t.getPiece().moveHere(CHESS_TILES, j.getPosition(), t.getPosition()));
                     System.out.println("pos to king sign " + posToKingSign + " piece to king ");
                     return true;
 
