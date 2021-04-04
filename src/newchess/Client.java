@@ -7,7 +7,7 @@ import java.net.*;
  *
  * @author chris
  */
-public final class Client {
+public final class Client { //TODO make a ip and port remembering system like minecraft maybe
     
     public Client(String ip, int port) {
         try {

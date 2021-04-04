@@ -181,21 +181,6 @@ class Rook extends ChessPiece{
         //You're moving incorrectly
         return NONE;
     }
-    
-    /*@Override
-    public boolean attackHere(ChessTile[][] chessBoard, Position newPos, Position currPos, SpecialMove specialMove) {
-        
-        //boolean isAlly = chessBoard[newPos.y][newPos.x].getPiece().isAlly();
-        //boolean isBlank = chessBoard[newPos.y][newPos.x].getPiece() instanceof blank;
-        
-        //You're moving correctly
-        if (movingCorrect(currPos, newPos)) {
-            return searchForPiece(chessBoard, newPos, currPos, currPos);
-        } 
-        //You are moving incorrectly 
-        else return false;
-    }*/
-    
     /*
     Function:
         Walks across the board in a straight line depending on whether the new piece is to the left, right, above, or below the current piece.
@@ -210,20 +195,24 @@ class Rook extends ChessPiece{
         - False if you cannot
     */
     private boolean searchForPiece(ChessTile[][] chessBoard, Position newPos, Position sp, Position originalPos) { 
-                                                                                         
+                                                            
+        if (newPos.equals(originalPos)) return false;
         ChessPiece search = chessBoard[sp.y][sp.x].getPiece();
         
         //Otherwise it would directly change the original search position which was causing bugs
         Position searchPos = new Position(sp.x, sp.y);
         
         //If the piece that the search function is currently selecting is not a blank piece then return false, as something is blocking the rook's way
-        if ((search.isAlly() && !searchPos.equals(newPos)) && !searchPos.equals(originalPos)) {
+        if ((!(search instanceof Blank) && !searchPos.equals(newPos)) && !searchPos.equals(originalPos)) {
             return false;
         } 
         //If the tile has been reached, and the rook can move there
         else if (!search.isAlly() && searchPos.equals(newPos)){
             return true;
         } 
+        else if (search.isAlly() && searchPos.equals(newPos)) {
+            return false;
+        }
         //The search function will recursively run until it reaches the specified position.
         else {
             //Setting search position one downwards
@@ -391,7 +380,7 @@ class Queen extends ChessPiece{
             return true;
         } 
         //If the piece that the search function is currently selecting is not a blank piece then return false, as something is blocking the queen's way
-        else if (search.isAlly() && !searchPos.equals(newPos) && !searchPos.equals(originalPos)) {
+        else if (!(search instanceof Blank) && !searchPos.equals(newPos) && !searchPos.equals(originalPos)) {
             return false;
         }
         //The search function will recursively run until it reaches the specified position.
@@ -463,11 +452,11 @@ class King extends ChessPiece{
         int horizontalChange = Math.abs(newPos.x - currPos.x);
         ChessPiece rook = chessBoard[newPos.y][newPos.x].getPiece();
         
-        if (rook.isAlly() && rook.hasMoved == false && this.hasMoved == false) {
+        if (rook.isAlly() && rook.hasMoved == false && this.hasMoved == false && false) {
             //TODO only allow if the castle doesn't put the king in check and the king already isn't in check
             return CASTLE;
         }
-        else if (chessBoard[newPos.y][newPos.x].getPiece() instanceof Blank && (verticalChange + horizontalChange == 1 || (verticalChange == 1 && horizontalChange == 1))) {
+        else if (!chessBoard[newPos.y][newPos.x].getPiece().isAlly() && (verticalChange + horizontalChange == 1 || (verticalChange == 1 && horizontalChange == 1))) {
             return NORMAL;
         }
         else return NONE;
