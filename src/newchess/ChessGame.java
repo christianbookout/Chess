@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import static newchess.ChessBoardWindow.CHESSBOARD_HEIGHT;
 import static newchess.ChessBoardWindow.CHESSBOARD_WIDTH;
 import static newchess.ChessMove.*;
@@ -46,7 +47,12 @@ public class ChessGame {
         
         //Piece just clicked (not selected piece necessarily)
         ChessPiece piece = tileClicked.getPiece();
-        
+        try {
+            System.out.println("Clicked on " + tileClicked + " is ally: " + tileClicked.getPiece().isAlly());
+            System.out.println("Selected tile: " + selectedTile);
+        } catch (Exception e) {
+            
+        }
         //If it isn't your turn to move then you can't do anything.
         if (!alliedTurn) {
             return;
@@ -117,6 +123,9 @@ public class ChessGame {
                     return;
                 }*/
                 switch (move) {
+                    case NORMAL:
+                        movePiece(selectedTile, tileClicked.getPosition());
+                        break;
                     case CASTLE:
                         //Already handled castling above.
                         System.err.println("Trying to castle after castle condition was already checked for some reason??");
@@ -128,7 +137,6 @@ public class ChessGame {
                         enPassant(selectedTile, tileClicked.getPosition());
                         break;
                 }
-                movePiece(selectedTile, tileClicked.getPosition());
                 sendMove(selectedTile, tileClicked.getPosition(), move);
 
             }
@@ -224,6 +232,7 @@ public class ChessGame {
         if (tile.getPiece() instanceof Pawn && Math.abs(tile.getPosition().y - toPosition.y) == 2) {
             ((Pawn) tile.getPiece()).pawnDoubleJumpTurnNumber = ChessGame.getTurnNumber();
         } 
+        System.out.println("moving " + tile + "  to " + toPosition);
         tile.getPiece().hasMoved();
         
         CHESS_TILES[toPosition.y][toPosition.x].setPiece(tile.getPiece(), tile.getPiece().isWhite(), tile.getPiece().isAlly());
@@ -247,7 +256,6 @@ public class ChessGame {
         ChessTile toTile = CHESS_TILES[toPos.y][toPos.x];
         
         fromTile.getPiece().isAlly(false);
-        
         if (decode.length == 4) {
             ChessGame.movePiece(CHESS_TILES[fromPos.y][fromPos.x], toPos);
 
@@ -350,16 +358,19 @@ public class ChessGame {
     private static void pawnPromotion(ChessTile fromTile, Position toPosition, ChessPiece promotionPiece) {
         
         CHESS_TILES[toPosition.y][toPosition.x].setPiece(promotionPiece, fromTile.getPiece().isWhite(), fromTile.getPiece().isAlly());
-        
         fromTile.setPiece(new Blank());
+        
+        //CHESS_TILES[fromTile.getPosition().y][fromTile.getPosition().x].setPiece(new Blank());
         endTurn();
     }
     //Move the pawn toPosition (completes an en passant) 
     public static void enPassant(ChessTile pawn, Position toPosition) {
+        
         CHESS_TILES[toPosition.y][toPosition.x].setPiece(pawn.getPiece());
         CHESS_TILES[pawn.getPosition().y][toPosition.x].setPiece(new Blank());
         pawn.setPiece(new Blank());
         endTurn();
+        
     }
     //Ends turn, increments turn number, and sets to opponent's turn 
     private static void endTurn() {
