@@ -19,7 +19,7 @@ public final class Host {
         this.port = port;
     }
     
-    //i think i did this because constructors cant throw exceptions?? dont remember but it works i guess
+    //i think i did this because constructors throwing exceptions is funny?? dont remember but it works i guess
     public void go() throws IOException{
         try {
             ServerSocket serverSocket = new ServerSocket(/*port*/9090);
