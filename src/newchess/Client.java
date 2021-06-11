@@ -12,7 +12,7 @@ public final class Client { //TODO make a ip and port remembering system like mi
     public Client(String ip, int port) {
         try {
 
-            Socket socket = new Socket(/*ip*/"127.0.0.1", /*port*/9090);
+            Socket socket = new Socket(ip, port);
             
             ChessGame.initializeGame(false, socket);
             
