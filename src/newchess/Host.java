@@ -22,7 +22,7 @@ public final class Host {
     //i think i did this because constructors throwing exceptions is funny?? dont remember but it works i guess
     public void go() throws IOException{
         try {
-            ServerSocket serverSocket = new ServerSocket(/*port*/9090);
+            ServerSocket serverSocket = new ServerSocket(port);
             
             Socket socket = serverSocket.accept();
             
